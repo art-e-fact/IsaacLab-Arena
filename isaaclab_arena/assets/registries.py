@@ -401,8 +401,8 @@ def ensure_assets_registered():
                 except Exception as e:
                     distribution = entry_point.dist.name if entry_point.dist else "an unknown distribution"
                     raise ImportError(
-                        f"Isaac Lab Arena plugin '{entry_point.name} = {entry_point.value}' from {distribution}"
-                        f" failed to load: {e}"
+                        f"Isaac Lab Arena plugin '{entry_point.name} = {entry_point.value}' from {distribution} failed"
+                        f" to load (set ISAACLAB_ARENA_DISABLE_PLUGIN_AUTOLOAD=1 to skip plugins): {e}"
                     ) from e
 
         _assets_registered = True

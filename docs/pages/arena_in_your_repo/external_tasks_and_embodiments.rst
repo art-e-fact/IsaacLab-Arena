@@ -175,7 +175,7 @@ Registering from an Installed Package
 The ``@register_*`` decorators register a component when its module is imported.
 Above, ``--external_environment_class_path`` imports the module that defines the environment,
 the task and the embodiment.
-A package can instead have Arena import its modules, by declaring an entry point in the
+A package can also have Arena import the modules that register its components, by declaring an entry point in the
 ``isaaclab_arena.plugins`` group of its ``pyproject.toml``:
 
 .. code-block:: toml
@@ -188,6 +188,14 @@ An entry point that names a module, as above, registers its components by being 
 One that names a function, such as ``"my_package:register"``, has the function called.
 Once the package is installed, its components can be used by name wherever Arena looks them up,
 for example as the embodiment's ``registry_name`` in an environment spec.
+Environments are not loaded this way: an environment class still needs ``--external_environment_class_path``.
+Arena reads entry points from the installed package's metadata,
+so reinstall the package after adding one, even an editable install.
+
+The plugin must register everything the package adds, retargeters included.
+Arena looks up the retargeter that lets a teleop device drive an embodiment by the device's name
+and the embodiment's ``registry_name``,
+so without one, Arena's own devices, such as ``keyboard``, cannot drive a plugin's embodiment.
 
 A plugin must import without Isaac Sim running.
 Arena's runners make their first registry lookup after Isaac Sim starts,
@@ -196,5 +204,7 @@ So, like Arena's own libraries, a plugin module must not import ``carb``, ``omni
 modules at module level.
 A config that needs a function from such a module, such as an event term, can name it as a
 ``"module:function"`` string, which Isaac Lab imports when it builds the environment.
+A component that needs those modules when it is imported, such as a device that reads input through ``carb``,
+stays out of the plugin: register it from a function the user calls after Isaac Sim starts.
 
-Set ``ISAACLAB_ARENA_DISABLE_PLUGIN_AUTOLOAD=1`` to skip the entry points.
+Set ``ISAACLAB_ARENA_DISABLE_PLUGIN_AUTOLOAD`` to any non-empty value to skip the entry points.
