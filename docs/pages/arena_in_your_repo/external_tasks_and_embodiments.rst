@@ -169,42 +169,41 @@ environment's ``add_cli_args()`` method.
           franka_table_with_task \
           --object tomato_soup_can
 
+.. _registering_from_an_installed_package:
+
 Registering from an Installed Package
 -------------------------------------
 
 The ``@register_*`` decorators register a component when its module is imported.
 Above, ``--external_environment_class_path`` imports the module that defines the environment,
 the task and the embodiment.
-A package can also have Arena import the modules that register its components, by declaring an entry point in the
-``isaaclab_arena.plugins`` group of its ``pyproject.toml``:
+A package can also have Arena import the modules that register its components, by declaring
+an entry point in the ``isaaclab_arena.plugins`` group of its ``pyproject.toml``:
 
 .. code-block:: toml
 
    [project.entry-points."isaaclab_arena.plugins"]
    my_robots = "my_package.embodiments"
 
-On the first registry lookup, Arena registers its own components, then loads each entry point in this group.
+Such a package is a plugin.
+On the first registry lookup, Arena registers its own components, then loads each entry point
+in this group.
 An entry point that names a module, as above, registers its components by being imported.
 One that names a function, such as ``"my_package:register"``, has the function called.
-Once the package is installed, its components can be used by name wherever Arena looks them up,
-for example as the embodiment's ``registry_name`` in an environment spec.
-Environments are not loaded this way: an environment class still needs ``--external_environment_class_path``.
-Arena reads entry points from the installed package's metadata,
-so reinstall the package after adding one, even an editable install.
+Once the package is installed, its components can be used by name wherever Arena looks them
+up, for example as the embodiment's ``registry_name`` in an environment spec.
+Environments are not loaded this way: an environment class still needs
+``--external_environment_class_path``.
+Arena reads entry points from the installed package's metadata, so reinstall the package
+after adding one, even an editable install.
 
-The plugin must register everything the package adds, retargeters included.
-Arena looks up the retargeter that lets a teleop device drive an embodiment by the device's name
-and the embodiment's ``registry_name``,
-so without one, Arena's own devices, such as ``keyboard``, cannot drive a plugin's embodiment.
-
-A plugin must import without Isaac Sim running.
-Arena's runners make their first registry lookup after Isaac Sim starts,
-but tests and spec tools look components up without it, and load the same plugins.
-So, like Arena's own libraries, a plugin module must not import ``carb``, ``omni`` or ``isaacsim``
-modules at module level.
+A plugin must import without Isaac Sim running: the environment YAML loader validates
+registry names, and so loads the plugins, before Isaac Sim starts.
+Like Arena's own modules, a plugin must therefore not import ``carb``, ``omni`` or
+``isaacsim`` at module level; import them inside the functions that need them.
 A config that needs a function from such a module, such as an event term, can name it as a
-``"module:function"`` string, which Isaac Lab imports when it builds the environment.
-A component that needs those modules when it is imported, such as a device that reads input through ``carb``,
-stays out of the plugin: register it from a function the user calls after Isaac Sim starts.
+``"module:function"`` string, which Isaac Lab resolves when it builds the environment.
+A component that cannot be defined without them stays out of the plugin: register it after
+Isaac Sim starts.
 
 Set ``ISAACLAB_ARENA_DISABLE_PLUGIN_AUTOLOAD`` to any non-empty value to skip the entry points.
